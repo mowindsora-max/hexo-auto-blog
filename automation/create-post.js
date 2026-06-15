@@ -150,12 +150,15 @@ async function createPost({
   generatedImageDir,
   postsDir,
   metadataPath,
+  metadata,
+  imagePath: providedImagePath,
   date,
   force = process.env.FORCE_DAILY_POST === "1",
+  dryRun = process.env.DRY_RUN === "1" || process.env.DRY_RUN === "true",
 } = loadConfig()) {
   const latest = metadataPath ? { metadataPath } : await findLatestMetadata({ generatedImageDir });
-  const metadata = await readMetadata(latest.metadataPath);
-  const slug = postSlugForMetadata({ metadataPath: latest.metadataPath, metadata });
+  const postMetadata = metadata || (await readMetadata(latest.metadataPath));
+  const slug = postSlugForMetadata({ metadataPath: latest.metadataPath, metadata: postMetadata });
   const postPath = path.join(postsDir, `${slug}.md`);
 
   if ((await fileExists(postPath)) && !force) {
@@ -168,11 +171,23 @@ async function createPost({
     };
   }
 
-  const imagePath = await findImageForMetadata(latest.metadataPath);
+  const imagePath = providedImagePath || (await findImageForMetadata(latest.metadataPath));
   const imageUrl = imageUrlForSourcePath({ siteRoot, sourcePath: imagePath });
-  const postDate = date || new Date(metadata.generated_at || Date.now());
+  const postDate = date || new Date(postMetadata.generated_at || Date.now());
+
+  if (dryRun) {
+    return {
+      created: false,
+      dryRun: true,
+      postPath,
+      imagePath,
+      imageUrl,
+      metadataPath: latest.metadataPath,
+    };
+  }
+
   const markdown = buildPostMarkdown({
-    metadata,
+    metadata: postMetadata,
     imageUrl,
     date: postDate,
   });

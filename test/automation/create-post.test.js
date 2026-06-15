@@ -126,3 +126,52 @@ test("createPost skips existing posts unless force is enabled", async () => {
   assert.equal(overwritten.created, true);
   assert.notEqual(fs.readFileSync(postPath, "utf8"), "existing");
 });
+
+test("createPost dry-run returns planned post without writing it", async () => {
+  const { siteRoot, generatedImageDir, postsDir } = tempSite();
+  const metadataPath = writeMetadata(generatedImageDir, "2026-06-12-daily-creativity-image-study");
+  fs.writeFileSync(path.join(generatedImageDir, "2026-06-12-daily-creativity-image-study.webp"), "webp", "utf8");
+
+  const result = await createPost({
+    siteRoot,
+    generatedImageDir,
+    postsDir,
+    metadataPath,
+    dryRun: true,
+  });
+
+  assert.equal(result.created, false);
+  assert.equal(result.dryRun, true);
+  assert.equal(result.postPath, path.join(postsDir, "2026-06-12-daily-creativity-image-study.md"));
+  assert.equal(fs.existsSync(result.postPath), false);
+});
+
+test("createPost dry-run can use in-memory metadata from image generation", async () => {
+  const { siteRoot, generatedImageDir, postsDir } = tempSite();
+  const metadataPath = path.join(generatedImageDir, "2026-06-12-daily-creativity-image-study.json");
+  const imagePath = path.join(generatedImageDir, "2026-06-12-daily-creativity-image-study.webp");
+
+  const result = await createPost({
+    siteRoot,
+    generatedImageDir,
+    postsDir,
+    metadataPath,
+    imagePath,
+    metadata: {
+      title_suggestion: "Daily Creativity Image Study",
+      slug_suggestion: "daily-creativity-image-study",
+      theme: "daily creativity image study",
+      visual_hook: "An everyday object anchors the visual story.",
+      tags: ["generated-image", "daily-journal"],
+      categories: ["image-journal"],
+      prompt: "Subject and role:\nA detailed prompt.",
+      generated_at: "2026-06-12T09:30:00.000Z",
+    },
+    dryRun: true,
+  });
+
+  assert.equal(result.dryRun, true);
+  assert.equal(result.postPath, path.join(postsDir, "2026-06-12-daily-creativity-image-study.md"));
+  assert.equal(result.imagePath, imagePath);
+  assert.equal(fs.existsSync(result.postPath), false);
+});

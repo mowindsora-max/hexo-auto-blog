@@ -7,6 +7,10 @@ function loadConfig({ env = process.env, siteRoot = path.resolve(__dirname, ".."
 
   const imageProvider = env.IMAGE_PROVIDER || "mock";
   const imageOutputFormat = env.IMAGE_OUTPUT_FORMAT || "png";
+  const imageRetryDelayMs = (env.IMAGE_RETRY_DELAY_MS || "5000,15000")
+    .split(",")
+    .map((value) => Number.parseInt(value.trim(), 10))
+    .filter((value) => Number.isFinite(value));
 
   return {
     siteRoot,
@@ -21,6 +25,9 @@ function loadConfig({ env = process.env, siteRoot = path.resolve(__dirname, ".."
     imageQuality: env.IMAGE_QUALITY || "medium",
     imageOutputFormat,
     imageOptimizationQuality: Number.parseInt(env.IMAGE_OPTIMIZATION_QUALITY || "82", 10),
+    imageRetryAttempts: Number.parseInt(env.IMAGE_RETRY_ATTEMPTS || "3", 10),
+    imageRetryDelayMs,
+    dryRun: env.DRY_RUN === "1" || env.DRY_RUN === "true",
     defaultTheme: env.DEFAULT_IMAGE_THEME || "daily creativity image study",
   };
 }

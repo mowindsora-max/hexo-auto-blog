@@ -6,11 +6,21 @@ const { createPost } = require("./create-post");
 async function main() {
   const config = loadConfig();
   const imageResult = await generateImage({ config });
-  const optimizeReport = await optimizeImages(config);
+  const optimizeReport = config.dryRun ? { optimized: [] } : await optimizeImages(config);
   const postResult = await createPost({
     ...config,
     metadataPath: imageResult.metadataPath,
+    metadata: imageResult.promptPackage.metadata,
+    imagePath: imageResult.imagePath,
   });
+
+  if (config.dryRun) {
+    console.log("Dry run enabled. No files were written.");
+    console.log(`Planned ${imageResult.provider} image: ${imageResult.imagePath}`);
+    console.log(`Planned metadata: ${imageResult.metadataPath}`);
+    console.log(`Planned post: ${postResult.postPath}`);
+    return;
+  }
 
   console.log(`Generated ${imageResult.provider} image: ${imageResult.imagePath}`);
   console.log(`Wrote metadata: ${imageResult.metadataPath}`);

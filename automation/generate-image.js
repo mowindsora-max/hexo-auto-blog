@@ -18,6 +18,38 @@ async function ensureDir(directory) {
   await fs.mkdir(directory, { recursive: true });
 }
 
+function plannedPaths({ config, promptPackage, date, extension }) {
+  const slug = promptPackage.metadata.slug_suggestion;
+  const baseName = `${dateStamp(date)}-${slug}`;
+  return {
+    imagePath: path.join(config.generatedImageDir, `${baseName}.${extension}`),
+    metadataPath: path.join(config.generatedImageDir, `${baseName}.json`),
+  };
+}
+
+function wait(ms) {
+  if (ms <= 0) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetries(operation, { attempts = 3, delayMs = [], label = "operation" } = {}) {
+  let lastError;
+  for (let index = 0; index < attempts; index += 1) {
+    try {
+      return await operation(index + 1);
+    } catch (error) {
+      lastError = error;
+      if (index < attempts - 1) {
+        await wait(delayMs[index] || 0);
+      }
+    }
+  }
+
+  throw new Error(`${label} failed after ${attempts} attempts: ${lastError.message}`);
+}
+
 async function writeMetadata({ metadataPath, provider, model, imagePath, promptPackage, config }) {
   const metadata = {
     ...promptPackage.metadata,
@@ -35,12 +67,25 @@ async function writeMetadata({ metadataPath, provider, model, imagePath, promptP
 }
 
 async function generateMockImage({ config, promptPackage, date = new Date() }) {
+  const { imagePath, metadataPath } = plannedPaths({
+    config,
+    promptPackage,
+    date,
+    extension: "svg",
+  });
+
+  if (config.dryRun) {
+    return {
+      provider: "mock",
+      imagePath,
+      metadataPath,
+      promptPackage,
+      dryRun: true,
+    };
+  }
+
   await ensureDir(config.generatedImageDir);
 
-  const slug = promptPackage.metadata.slug_suggestion;
-  const baseName = `${dateStamp(date)}-${slug}`;
-  const imagePath = path.join(config.generatedImageDir, `${baseName}.svg`);
-  const metadataPath = path.join(config.generatedImageDir, `${baseName}.json`);
   const title = escapeXml(promptPackage.metadata.title_suggestion);
   const theme = escapeXml(promptPackage.metadata.theme);
 
@@ -86,26 +131,45 @@ async function createOpenAIClient(config) {
 }
 
 async function generateOpenAIImage({ config, promptPackage, client, date = new Date() }) {
-  await ensureDir(config.generatedImageDir);
-
-  const openai = client || (await createOpenAIClient(config));
-  const result = await openai.images.generate({
-    model: config.imageModel,
-    prompt: promptPackage.prompt,
-    size: config.imageSize,
-    quality: config.imageQuality,
-    output_format: config.imageOutputFormat,
+  const { imagePath, metadataPath } = plannedPaths({
+    config,
+    promptPackage,
+    date,
+    extension: config.imageOutputFormat,
   });
+
+  if (config.dryRun) {
+    return {
+      provider: "openai",
+      imagePath,
+      metadataPath,
+      promptPackage,
+      dryRun: true,
+    };
+  }
+
+  await ensureDir(config.generatedImageDir);
+  const openai = client || (await createOpenAIClient(config));
+  const result = await withRetries(
+    () =>
+      openai.images.generate({
+        model: config.imageModel,
+        prompt: promptPackage.prompt,
+        size: config.imageSize,
+        quality: config.imageQuality,
+        output_format: config.imageOutputFormat,
+      }),
+    {
+      attempts: config.imageRetryAttempts,
+      delayMs: config.imageRetryDelayMs,
+      label: "OpenAI image generation",
+    },
+  );
 
   const imageBase64 = result.data?.[0]?.b64_json;
   if (!imageBase64) {
     throw new Error("OpenAI image generation returned no b64_json data.");
   }
-
-  const slug = promptPackage.metadata.slug_suggestion;
-  const baseName = `${dateStamp(date)}-${slug}`;
-  const imagePath = path.join(config.generatedImageDir, `${baseName}.${config.imageOutputFormat}`);
-  const metadataPath = path.join(config.generatedImageDir, `${baseName}.json`);
 
   await fs.writeFile(imagePath, Buffer.from(imageBase64, "base64"));
   await writeMetadata({
@@ -146,4 +210,6 @@ module.exports = {
   generateImage,
   generateMockImage,
   generateOpenAIImage,
+  plannedPaths,
+  withRetries,
 };

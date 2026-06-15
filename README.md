@@ -12,6 +12,22 @@ npm run validate
 npm run serve
 ```
 
+Preview a daily run without writing files:
+
+```powershell
+$env:DRY_RUN="1"
+npm run daily
+Remove-Item Env:\DRY_RUN
+```
+
+Regenerate the same day's post after editing prompts or metadata:
+
+```powershell
+$env:FORCE_DAILY_POST="1"
+npm run daily
+Remove-Item Env:\FORCE_DAILY_POST
+```
+
 ## Daily Automation
 
 The workflow lives at `.github/workflows/daily-blog.yml`.
@@ -44,6 +60,8 @@ IMAGE_SIZE=1536x1024
 IMAGE_QUALITY=medium
 IMAGE_OUTPUT_FORMAT=png
 IMAGE_OPTIMIZATION_QUALITY=82
+IMAGE_RETRY_ATTEMPTS=3
+IMAGE_RETRY_DELAY_MS=5000,15000
 DEFAULT_IMAGE_THEME=daily creativity image study
 MAX_OPTIMIZED_IMAGE_BYTES=1048576
 ```
@@ -55,3 +73,11 @@ For a no-cost test deployment, set `IMAGE_PROVIDER=mock` or omit it.
 Copy `.env.example` to `.env` for local runs.
 
 Do not commit `.env`.
+
+## Reliability Notes
+
+- OpenAI image generation retries transient failures up to `IMAGE_RETRY_ATTEMPTS`.
+- Retry delays are configured with `IMAGE_RETRY_DELAY_MS`, using comma-separated milliseconds.
+- `DRY_RUN=1` prints the planned image, metadata, and post paths without writing generated files.
+- Existing daily posts are not overwritten unless `FORCE_DAILY_POST=1`.
+- `npm run validate` should be run after every build and before deployment.
