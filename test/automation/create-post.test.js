@@ -86,7 +86,7 @@ test("createPost writes a Hexo post that prefers webp image assets", async () =>
   });
 
   assert.equal(result.created, true);
-  assert.equal(result.postPath, path.join(postsDir, "daily-creativity-image-study.md"));
+  assert.equal(result.postPath, path.join(postsDir, "2026-06-12-daily-creativity-image-study.md"));
 
   const post = fs.readFileSync(result.postPath, "utf8");
   assert.match(post, /title: "Daily Creativity Image Study"/);
@@ -103,7 +103,7 @@ test("createPost skips existing posts unless force is enabled", async () => {
   const { siteRoot, generatedImageDir, postsDir } = tempSite();
   const metadataPath = writeMetadata(generatedImageDir, "2026-06-12-daily-creativity-image-study");
   fs.writeFileSync(path.join(generatedImageDir, "2026-06-12-daily-creativity-image-study.webp"), "webp", "utf8");
-  const postPath = path.join(postsDir, "daily-creativity-image-study.md");
+  const postPath = path.join(postsDir, "2026-06-12-daily-creativity-image-study.md");
   fs.writeFileSync(postPath, "existing", "utf8");
 
   const skipped = await createPost({

@@ -1,0 +1,84 @@
+name: Daily Image Blog
+
+on:
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate daily post
+        run: npm run daily
+        env:
+          IMAGE_PROVIDER: ${{ vars.IMAGE_PROVIDER || 'mock' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          IMAGE_MODEL: ${{ vars.IMAGE_MODEL || 'gpt-image-2' }}
+          IMAGE_SIZE: ${{ vars.IMAGE_SIZE || '1536x1024' }}
+          IMAGE_QUALITY: ${{ vars.IMAGE_QUALITY || 'medium' }}
+          IMAGE_OUTPUT_FORMAT: ${{ vars.IMAGE_OUTPUT_FORMAT || 'png' }}
+          IMAGE_OPTIMIZATION_QUALITY: ${{ vars.IMAGE_OPTIMIZATION_QUALITY || '82' }}
+          DEFAULT_IMAGE_THEME: ${{ vars.DEFAULT_IMAGE_THEME || 'daily creativity image study' }}
+          MAX_OPTIMIZED_IMAGE_BYTES: ${{ vars.MAX_OPTIMIZED_IMAGE_BYTES || '1048576' }}
+
+      - name: Commit generated source
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          commit_message: "post: publish daily image journal"
+          file_pattern: source/_posts/*.md source/images/generated/*
+
+      - name: Build Hexo site
+        run: npm run build
+
+      - name: Validate site
+        run: npm run validate
+        env:
+          MAX_OPTIMIZED_IMAGE_BYTES: ${{ vars.MAX_OPTIMIZED_IMAGE_BYTES || '1048576' }}
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: public
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

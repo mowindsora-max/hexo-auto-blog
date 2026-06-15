@@ -12,6 +12,8 @@ function loadConfig({ env = process.env, siteRoot = path.resolve(__dirname, ".."
     siteRoot,
     generatedImageDir: path.join(siteRoot, "source", "images", "generated"),
     postsDir: path.join(siteRoot, "source", "_posts"),
+    publicDir: path.join(siteRoot, "public"),
+    maxOptimizedImageBytes: Number.parseInt(env.MAX_OPTIMIZED_IMAGE_BYTES || String(1024 * 1024), 10),
     imageProvider,
     imageApiKey: env.OPENAI_API_KEY || env.IMAGE_API_KEY || "",
     imageModel: env.IMAGE_MODEL || "gpt-image-2",

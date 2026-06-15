@@ -134,6 +134,17 @@ ${metadata.prompt || ""}
 `;
 }
 
+function postSlugForMetadata({ metadataPath, metadata }) {
+  const baseName = path.basename(metadataPath, ".json");
+  const datedMatch = baseName.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
+
+  if (datedMatch) {
+    return `${datedMatch[1]}-${slugify(metadata.slug_suggestion || datedMatch[2])}`;
+  }
+
+  return slugify(metadata.slug_suggestion || metadata.title_suggestion || metadata.theme || "daily-image-study");
+}
+
 async function createPost({
   siteRoot,
   generatedImageDir,
@@ -144,7 +155,7 @@ async function createPost({
 } = loadConfig()) {
   const latest = metadataPath ? { metadataPath } : await findLatestMetadata({ generatedImageDir });
   const metadata = await readMetadata(latest.metadataPath);
-  const slug = slugify(metadata.slug_suggestion || metadata.title_suggestion || metadata.theme || "daily-image-study");
+  const slug = postSlugForMetadata({ metadataPath: latest.metadataPath, metadata });
   const postPath = path.join(postsDir, `${slug}.md`);
 
   if ((await fileExists(postPath)) && !force) {
@@ -203,4 +214,5 @@ module.exports = {
   findLatestMetadata,
   formatHexoDate,
   imageUrlForSourcePath,
+  postSlugForMetadata,
 };
