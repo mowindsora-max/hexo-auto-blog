@@ -127,7 +127,20 @@ async function createOpenAIClient(config) {
   }
 
   const { default: OpenAI } = await import("openai");
-  return new OpenAI({ apiKey: config.imageApiKey });
+  const clientOptions = {
+    apiKey: config.imageApiKey,
+    timeout: config.openAIImageTimeoutMs,
+  };
+
+  if (config.openAIProxyUrl) {
+    const { fetch, ProxyAgent } = await import("undici");
+    clientOptions.fetch = fetch;
+    clientOptions.fetchOptions = {
+      dispatcher: new ProxyAgent(config.openAIProxyUrl),
+    };
+  }
+
+  return new OpenAI(clientOptions);
 }
 
 async function generateOpenAIImage({ config, promptPackage, client, date = new Date() }) {
@@ -158,6 +171,8 @@ async function generateOpenAIImage({ config, promptPackage, client, date = new D
         size: config.imageSize,
         quality: config.imageQuality,
         output_format: config.imageOutputFormat,
+      }, {
+        timeout: config.openAIImageTimeoutMs,
       }),
     {
       attempts: config.imageRetryAttempts,

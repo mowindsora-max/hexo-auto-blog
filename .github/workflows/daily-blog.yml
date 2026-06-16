@@ -44,6 +44,7 @@ jobs:
           IMAGE_QUALITY: ${{ vars.IMAGE_QUALITY || 'medium' }}
           IMAGE_OUTPUT_FORMAT: ${{ vars.IMAGE_OUTPUT_FORMAT || 'png' }}
           IMAGE_OPTIMIZATION_QUALITY: ${{ vars.IMAGE_OPTIMIZATION_QUALITY || '82' }}
+          OPENAI_IMAGE_TIMEOUT_MS: ${{ vars.OPENAI_IMAGE_TIMEOUT_MS || '180000' }}
           IMAGE_PROMPT_FILE: ${{ vars.IMAGE_PROMPT_FILE || 'prompts/daily-image-prompt.md' }}
           DEFAULT_IMAGE_THEME: ${{ vars.DEFAULT_IMAGE_THEME || 'game illustration' }}
           MAX_OPTIMIZED_IMAGE_BYTES: ${{ vars.MAX_OPTIMIZED_IMAGE_BYTES || '1048576' }}

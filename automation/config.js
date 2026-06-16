@@ -21,6 +21,7 @@ function loadConfig({ env = process.env, siteRoot = path.resolve(__dirname, ".."
     maxOptimizedImageBytes: Number.parseInt(env.MAX_OPTIMIZED_IMAGE_BYTES || String(1024 * 1024), 10),
     imageProvider,
     imageApiKey: env.OPENAI_API_KEY || env.IMAGE_API_KEY || "",
+    openAIProxyUrl: env.OPENAI_PROXY_URL || env.HTTPS_PROXY || env.HTTP_PROXY || env.https_proxy || env.http_proxy || "",
     imageModel: env.IMAGE_MODEL || "gpt-image-2",
     imageSize: env.IMAGE_SIZE || "1536x1024",
     imageQuality: env.IMAGE_QUALITY || "medium",
@@ -28,6 +29,7 @@ function loadConfig({ env = process.env, siteRoot = path.resolve(__dirname, ".."
     imageOptimizationQuality: Number.parseInt(env.IMAGE_OPTIMIZATION_QUALITY || "82", 10),
     imageRetryAttempts: Number.parseInt(env.IMAGE_RETRY_ATTEMPTS || "3", 10),
     imageRetryDelayMs,
+    openAIImageTimeoutMs: Number.parseInt(env.OPENAI_IMAGE_TIMEOUT_MS || "180000", 10),
     dryRun: env.DRY_RUN === "1" || env.DRY_RUN === "true",
     defaultTheme: env.DEFAULT_IMAGE_THEME || "game illustration",
   };

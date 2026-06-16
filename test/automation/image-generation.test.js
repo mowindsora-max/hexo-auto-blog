@@ -32,6 +32,8 @@ test("loadConfig uses safe defaults and resolves generated image directory", () 
   assert.equal(config.imageOutputFormat, "png");
   assert.equal(config.imageRetryAttempts, 3);
   assert.deepEqual(config.imageRetryDelayMs, [5000, 15000]);
+  assert.equal(config.openAIImageTimeoutMs, 180000);
+  assert.equal(config.openAIProxyUrl, "");
   assert.equal(config.dryRun, false);
   assert.equal(config.promptFilePath, path.join(siteRoot, "prompts", "daily-image-prompt.md"));
   assert.equal(config.generatedImageDir, path.join(siteRoot, "source", "images", "generated"));
@@ -128,8 +130,8 @@ test("generateOpenAIImage calls the image API and stores decoded output", async 
   const calls = [];
   const fakeClient = {
     images: {
-      async generate(payload) {
-        calls.push(payload);
+      async generate(payload, requestOptions) {
+        calls.push({ payload, requestOptions });
         return {
           data: [
             {
@@ -144,12 +146,25 @@ test("generateOpenAIImage calls the image API and stores decoded output", async 
   const result = await generateOpenAIImage({ config, promptPackage, client: fakeClient });
 
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].model, "gpt-image-2");
-  assert.equal(calls[0].prompt, promptPackage.prompt);
-  assert.equal(calls[0].size, "1536x1024");
-  assert.equal(calls[0].quality, "medium");
-  assert.equal(calls[0].output_format, "png");
+  assert.equal(calls[0].payload.model, "gpt-image-2");
+  assert.equal(calls[0].payload.prompt, promptPackage.prompt);
+  assert.equal(calls[0].payload.size, "1536x1024");
+  assert.equal(calls[0].payload.quality, "medium");
+  assert.equal(calls[0].payload.output_format, "png");
+  assert.deepEqual(calls[0].requestOptions, { timeout: 180000 });
   assert.equal(fs.readFileSync(result.imagePath, "utf8"), "fake-image-bytes");
+});
+
+test("loadConfig picks up OpenAI proxy from environment", () => {
+  const siteRoot = tempSite();
+  const config = loadConfig({
+    env: {
+      HTTPS_PROXY: "http://127.0.0.1:52385",
+    },
+    siteRoot,
+  });
+
+  assert.equal(config.openAIProxyUrl, "http://127.0.0.1:52385");
 });
 
 test("generateOpenAIImage retries transient provider failures", async () => {
