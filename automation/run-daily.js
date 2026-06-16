@@ -3,33 +3,51 @@ const { generateImage } = require("./generate-image");
 const { optimizeImages } = require("./optimize-images");
 const { createPost } = require("./create-post");
 
-async function main() {
-  const config = loadConfig();
-  const imageResult = await generateImage({ config });
-  const optimizeReport = config.dryRun ? { optimized: [] } : await optimizeImages(config);
-  const postResult = await createPost({
+async function runDaily({
+  config,
+  generateImageFn = generateImage,
+  optimizeImagesFn = optimizeImages,
+  createPostFn = createPost,
+  logger = console,
+} = {}) {
+  const imageResult = await generateImageFn({ config });
+  const optimizeReport = config.dryRun ? { optimized: [] } : await optimizeImagesFn(config);
+  const postOptions = {
     ...config,
     metadataPath: imageResult.metadataPath,
-    metadata: imageResult.promptPackage.metadata,
-    imagePath: imageResult.imagePath,
-  });
+  };
 
   if (config.dryRun) {
-    console.log("Dry run enabled. No files were written.");
-    console.log(`Planned ${imageResult.provider} image: ${imageResult.imagePath}`);
-    console.log(`Planned metadata: ${imageResult.metadataPath}`);
-    console.log(`Planned post: ${postResult.postPath}`);
-    return;
+    postOptions.metadata = imageResult.promptPackage.metadata;
+    postOptions.imagePath = imageResult.imagePath;
   }
 
-  console.log(`Generated ${imageResult.provider} image: ${imageResult.imagePath}`);
-  console.log(`Wrote metadata: ${imageResult.metadataPath}`);
-  console.log(`Optimized images: ${optimizeReport.optimized.length}`);
-  if (postResult.created) {
-    console.log(`Created post: ${postResult.postPath}`);
-  } else {
-    console.log(`Skipped post: ${postResult.postPath} (${postResult.reason})`);
+  const postResult = await createPostFn(postOptions);
+
+  if (config.dryRun) {
+    logger.log("Dry run enabled. No files were written.");
+    logger.log(`Planned ${imageResult.provider} image: ${imageResult.imagePath}`);
+    logger.log(`Planned metadata: ${imageResult.metadataPath}`);
+    logger.log(`Planned post: ${postResult.postPath}`);
+    return { imageResult, optimizeReport, postResult };
   }
+
+  logger.log(`Generated ${imageResult.provider} image: ${imageResult.imagePath}`);
+  logger.log(`Wrote metadata: ${imageResult.metadataPath}`);
+  logger.log(`Optimized images: ${optimizeReport.optimized.length}`);
+  if (postResult.created) {
+    logger.log(`Created post: ${postResult.postPath}`);
+  } else {
+    logger.log(`Skipped post: ${postResult.postPath} (${postResult.reason})`);
+  }
+
+  return { imageResult, optimizeReport, postResult };
+}
+
+async function main() {
+  await runDaily({
+    config: loadConfig(),
+  });
 }
 
 if (require.main === module) {
@@ -41,4 +59,5 @@ if (require.main === module) {
 
 module.exports = {
   main,
+  runDaily,
 };

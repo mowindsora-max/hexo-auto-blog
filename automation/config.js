@@ -17,6 +17,7 @@ function loadConfig({ env = process.env, siteRoot = path.resolve(__dirname, ".."
     generatedImageDir: path.join(siteRoot, "source", "images", "generated"),
     postsDir: path.join(siteRoot, "source", "_posts"),
     publicDir: path.join(siteRoot, "public"),
+    promptFilePath: path.resolve(siteRoot, env.IMAGE_PROMPT_FILE || "prompts/daily-image-prompt.md"),
     maxOptimizedImageBytes: Number.parseInt(env.MAX_OPTIMIZED_IMAGE_BYTES || String(1024 * 1024), 10),
     imageProvider,
     imageApiKey: env.OPENAI_API_KEY || env.IMAGE_API_KEY || "",
@@ -28,7 +29,7 @@ function loadConfig({ env = process.env, siteRoot = path.resolve(__dirname, ".."
     imageRetryAttempts: Number.parseInt(env.IMAGE_RETRY_ATTEMPTS || "3", 10),
     imageRetryDelayMs,
     dryRun: env.DRY_RUN === "1" || env.DRY_RUN === "true",
-    defaultTheme: env.DEFAULT_IMAGE_THEME || "daily creativity image study",
+    defaultTheme: env.DEFAULT_IMAGE_THEME || "game illustration",
   };
 }
 

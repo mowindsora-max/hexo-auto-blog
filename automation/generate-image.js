@@ -1,6 +1,6 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { buildPromptPackage } = require("./build-prompt");
+const { buildPromptPackage, loadPromptText } = require("./build-prompt");
 
 function dateStamp(date) {
   return date.toISOString().slice(0, 10);
@@ -190,9 +190,13 @@ async function generateOpenAIImage({ config, promptPackage, client, date = new D
 }
 
 async function generateImage({ config, date = new Date(), theme } = {}) {
+  const promptText = await loadPromptText({
+    promptFilePath: config.promptFilePath,
+  });
   const promptPackage = buildPromptPackage({
     date,
     theme: theme || config.defaultTheme,
+    promptText,
   });
 
   if (config.imageProvider === "mock") {

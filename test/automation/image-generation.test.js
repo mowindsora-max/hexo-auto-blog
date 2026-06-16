@@ -5,7 +5,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const { loadConfig } = require("../../automation/config");
-const { buildPromptPackage } = require("../../automation/build-prompt");
+const { buildPromptPackage, loadPromptText } = require("../../automation/build-prompt");
 const {
   generateMockImage,
   generateOpenAIImage,
@@ -33,7 +33,30 @@ test("loadConfig uses safe defaults and resolves generated image directory", () 
   assert.equal(config.imageRetryAttempts, 3);
   assert.deepEqual(config.imageRetryDelayMs, [5000, 15000]);
   assert.equal(config.dryRun, false);
+  assert.equal(config.promptFilePath, path.join(siteRoot, "prompts", "daily-image-prompt.md"));
   assert.equal(config.generatedImageDir, path.join(siteRoot, "source", "images", "generated"));
+});
+
+test("loadPromptText reads a Markdown prompt file when it exists", async () => {
+  const siteRoot = tempSite();
+  const promptFilePath = path.join(siteRoot, "prompts", "daily-image-prompt.md");
+  fs.mkdirSync(path.dirname(promptFilePath), { recursive: true });
+  fs.writeFileSync(promptFilePath, "# Daily Image Prompt\n\n生成一张游戏插图。\n", "utf8");
+
+  const promptText = await loadPromptText({ promptFilePath });
+
+  assert.equal(promptText, "生成一张游戏插图。");
+});
+
+test("loadPromptText strips a UTF-8 BOM before filtering Markdown headings", async () => {
+  const siteRoot = tempSite();
+  const promptFilePath = path.join(siteRoot, "prompts", "daily-image-prompt.md");
+  fs.mkdirSync(path.dirname(promptFilePath), { recursive: true });
+  fs.writeFileSync(promptFilePath, "\uFEFF# Daily Image Prompt\n\n生成一张游戏插图。\n", "utf8");
+
+  const promptText = await loadPromptText({ promptFilePath });
+
+  assert.equal(promptText, "生成一张游戏插图。");
 });
 
 test("buildPromptPackage creates a director-level prompt and ASCII slug", () => {
@@ -47,6 +70,19 @@ test("buildPromptPackage creates a director-level prompt and ASCII slug", () => 
   assert.match(promptPackage.prompt, /Constraints \/ avoid:/);
   assert.equal(promptPackage.metadata.slug_suggestion, "coastal-city-dusk-image-study");
   assert.deepEqual(promptPackage.metadata.tags, ["generated-image", "daily-journal"]);
+});
+
+test("buildPromptPackage uses persisted prompt text as the final generation prompt", () => {
+  const promptPackage = buildPromptPackage({
+    date: new Date("2026-06-16T09:30:00+08:00"),
+    theme: "game illustration",
+    promptText: "生成一张游戏插图。\nUI风格：2D插画风格。",
+  });
+
+  assert.equal(promptPackage.prompt, "生成一张游戏插图。\nUI风格：2D插画风格。");
+  assert.equal(promptPackage.metadata.slug_suggestion, "game-illustration");
+  assert.equal(promptPackage.metadata.theme, "game illustration");
+  assert.equal(promptPackage.metadata.style_preset, "persisted-markdown-prompt");
 });
 
 test("generateMockImage writes a deterministic svg image and metadata", async () => {

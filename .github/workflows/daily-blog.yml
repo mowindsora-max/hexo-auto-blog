@@ -44,7 +44,8 @@ jobs:
           IMAGE_QUALITY: ${{ vars.IMAGE_QUALITY || 'medium' }}
           IMAGE_OUTPUT_FORMAT: ${{ vars.IMAGE_OUTPUT_FORMAT || 'png' }}
           IMAGE_OPTIMIZATION_QUALITY: ${{ vars.IMAGE_OPTIMIZATION_QUALITY || '82' }}
-          DEFAULT_IMAGE_THEME: ${{ vars.DEFAULT_IMAGE_THEME || 'daily creativity image study' }}
+          IMAGE_PROMPT_FILE: ${{ vars.IMAGE_PROMPT_FILE || 'prompts/daily-image-prompt.md' }}
+          DEFAULT_IMAGE_THEME: ${{ vars.DEFAULT_IMAGE_THEME || 'game illustration' }}
           MAX_OPTIMIZED_IMAGE_BYTES: ${{ vars.MAX_OPTIMIZED_IMAGE_BYTES || '1048576' }}
 
       - name: Commit generated source

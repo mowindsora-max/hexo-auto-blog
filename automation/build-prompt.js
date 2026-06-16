@@ -1,3 +1,5 @@
+const fs = require("node:fs/promises");
+
 function slugify(value) {
   return value
     .toLowerCase()
@@ -8,14 +10,61 @@ function slugify(value) {
     .replace(/-+$/g, "") || "daily-image-study";
 }
 
-function buildPromptPackage({ date = new Date(), theme = "daily creativity image study" } = {}) {
-  const slug = slugify(theme);
-  const isoDate = date.toISOString().slice(0, 10);
-  const title = theme
+async function loadPromptText({ promptFilePath }) {
+  try {
+    const markdown = (await fs.readFile(promptFilePath, "utf8")).replace(/^\uFEFF/, "");
+    return markdown
+      .split(/\r?\n/)
+      .filter((line) => !line.trim().startsWith("#"))
+      .join("\n")
+      .trim();
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return "";
+    }
+    throw error;
+  }
+}
+
+function titleFromTheme(theme) {
+  return theme
     .split(/\s+/)
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function buildPromptPackage({ date = new Date(), theme = "daily creativity image study", promptText = "" } = {}) {
+  const slug = slugify(theme);
+  const isoDate = date.toISOString().slice(0, 10);
+  const title = titleFromTheme(theme);
+
+  if (promptText.trim()) {
+    const prompt = promptText.trim();
+    return {
+      prompt,
+      metadata: {
+        title_suggestion: title || "Game Illustration",
+        slug_suggestion: slug,
+        theme,
+        subject_role: "adult ethereal female game character",
+        visual_hook: "A mysterious poetic ritual moment in a 2D game illustration.",
+        style_preset: "persisted-markdown-prompt",
+        aspect_ratio: "1536x1024",
+        palette: ["cold moonlight", "mist white", "ink blue", "muted silver"],
+        tags: ["generated-image", "daily-journal", "game-illustration"],
+        categories: ["image-journal"],
+        negative_details: [
+          "minor or ambiguous-age character",
+          "sexualized framing",
+          "random logos",
+          "watermarks",
+          "unreadable text",
+        ],
+        prompt,
+      },
+    };
+  }
 
   const prompt = [
     "Subject and role:",
@@ -75,5 +124,6 @@ function buildPromptPackage({ date = new Date(), theme = "daily creativity image
 
 module.exports = {
   buildPromptPackage,
+  loadPromptText,
   slugify,
 };
