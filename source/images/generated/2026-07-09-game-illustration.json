@@ -1,0 +1,38 @@
+{
+  "title_suggestion": "Game Illustration",
+  "slug_suggestion": "game-illustration",
+  "theme": "game illustration",
+  "subject_role": "adult ethereal female game character",
+  "visual_hook": "A mysterious poetic ritual moment in a 2D game illustration.",
+  "style_preset": "persisted-markdown-prompt",
+  "aspect_ratio": "1536x1024",
+  "palette": [
+    "cold moonlight",
+    "mist white",
+    "ink blue",
+    "muted silver"
+  ],
+  "tags": [
+    "generated-image",
+    "daily-journal",
+    "game-illustration"
+  ],
+  "categories": [
+    "image-journal"
+  ],
+  "negative_details": [
+    "minor or ambiguous-age character",
+    "sexualized framing",
+    "random logos",
+    "watermarks",
+    "unreadable text"
+  ],
+  "prompt": "生成一张游戏插图。\n\nUI风格：2D插画风格，用清晰剪影、克制留白、少量神衬线字体，营造神秘、诗性、仪式化的视觉。\n\n角色风格：清冷的美女、仙灵感、清纯、高冷。\n\n约束：角色为成年女性；避免未成年或年龄模糊的角色设定；避免性化构图、暴露服装、随机水印、乱码文字、品牌 Logo。",
+  "provider": "mock",
+  "model": "mock-svg",
+  "image_path": "/home/runner/work/hexo-auto-blog/hexo-auto-blog/source/images/generated/2026-07-09-game-illustration.svg",
+  "size": "1536x1024",
+  "quality": "medium",
+  "output_format": "svg",
+  "generated_at": "2026-07-09T23:00:29.373Z"
+}
