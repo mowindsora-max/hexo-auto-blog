@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024">
+  <rect width="1536" height="1024" fill="#d8e2df"/>
+  <rect x="96" y="96" width="1344" height="832" rx="0" fill="#f7f1e7"/>
+  <path d="M96 688 C320 560 500 792 736 640 C920 522 1088 568 1440 420 L1440 928 L96 928 Z" fill="#8aa1a6"/>
+  <circle cx="1180" cy="260" r="112" fill="#d69b53" opacity="0.82"/>
+  <rect x="188" y="204" width="456" height="24" fill="#2f3d44"/>
+  <rect x="188" y="252" width="700" height="16" fill="#617075"/>
+  <rect x="188" y="292" width="612" height="16" fill="#617075"/>
+  <text x="188" y="404" font-family="Arial, sans-serif" font-size="64" fill="#2f3d44">Daily Image Journal</text>
+  <text x="188" y="488" font-family="Arial, sans-serif" font-size="40" fill="#546367">Game Illustration</text>
+  <text x="188" y="552" font-family="Arial, sans-serif" font-size="30" fill="#546367">game illustration</text>
+</svg>
